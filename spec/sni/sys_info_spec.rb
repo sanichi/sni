@@ -116,7 +116,7 @@ RSpec.describe Sni::SysInfo do
           allow(service).to receive(:`).with('env -i /usr/bin/passenger-config --version')
                                        .and_return('Phusion Passenger 6.0.15')
           result = service.call
-          expect(result[:server_version]).to eq('Phusion 6.0.15')
+          expect(result[:server_version]).to eq('Passenger 6.0.15')
         end
 
         it 'handles passenger command failure' do

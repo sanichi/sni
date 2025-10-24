@@ -34,7 +34,7 @@ system_info = Sni::SysInfo.call
 #   ruby_version: "3.4.5", 
 #   rails_version: "7.0.0" (or "N/A" if not in Rails),
 #   gem_version: "3.7.0",
-#   server_version: "Phusion 6.0.15" (in production) or "Puma 5.6.4" (in development),
+#   server_version: "Passenger 6.0.15" (in production) or "Puma 5.6.4" (in development),
 #   environment: "production" (or "N/A" if not in Rails)
 # }
 

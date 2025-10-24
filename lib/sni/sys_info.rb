@@ -53,7 +53,7 @@ module Sni
     def passenger_version
       return nil unless production_environment?
       version = `env -i /usr/bin/passenger-config --version`.scan(/\d+\.\d+\.\d+/).first
-      version ? "Phusion #{version}" : nil
+      version ? "Passenger #{version}" : nil
     rescue => e
       log_warning("Failed to get Passenger version: #{e.message}")
       "unknown"
