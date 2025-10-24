@@ -26,7 +26,7 @@ bundle install
 
 ```ruby
 # Get all system information
-system_info = Sni::SystemInfoService.call
+system_info = Sni::SysInfo.call
 
 # Returns a hash with:
 # {
@@ -41,7 +41,7 @@ system_info = Sni::SystemInfoService.call
 # Use in Rails controllers
 class PagesController < ApplicationController
   def env
-    @system_info = Sni::SystemInfoService.call
+    @system_info = Sni::SysInfo.call
   end
 end
 

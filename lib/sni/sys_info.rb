@@ -1,7 +1,5 @@
-
-
 module Sni
-  class SystemInfoService
+  class SysInfo
     def self.call
       new.call
     end

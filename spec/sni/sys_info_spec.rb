@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Sni::SystemInfoService do
+RSpec.describe Sni::SysInfo do
   let(:service) { described_class.new }
 
   before do

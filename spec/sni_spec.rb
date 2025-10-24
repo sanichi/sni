@@ -6,6 +6,6 @@ RSpec.describe Sni do
   end
 
   it "provides system information service" do
-    expect(Sni::SystemInfoService).to respond_to(:call)
+    expect(Sni::SysInfo).to respond_to(:call)
   end
 end
