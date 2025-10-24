@@ -7,11 +7,11 @@ module Sni
     def call
       {
         host: hostname,
-        ruby_version: ruby_version,
-        rails_version: rails_version,
-        gem_version: gem_version,
-        server_version: server_version,
-        environment: rails_environment
+        ruby: ruby_version,
+        rails: rails_version,
+        gem: gem_version,
+        server: server_version,
+        env: rails_environment
       }
     end
 

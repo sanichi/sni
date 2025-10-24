@@ -17,11 +17,11 @@ RSpec.describe Sni::SysInfo do
 
       expect(result).to be_a(Hash)
       expect(result).to have_key(:host)
-      expect(result).to have_key(:ruby_version)
-      expect(result).to have_key(:rails_version)
-      expect(result).to have_key(:gem_version)
-      expect(result).to have_key(:server_version)
-      expect(result).to have_key(:environment)
+      expect(result).to have_key(:ruby)
+      expect(result).to have_key(:rails)
+      expect(result).to have_key(:gem)
+      expect(result).to have_key(:server)
+      expect(result).to have_key(:env)
     end
   end
 
@@ -30,7 +30,7 @@ RSpec.describe Sni::SysInfo do
     describe 'ruby_version' do
       it 'returns the Ruby version' do
         result = service.call
-        expect(result[:ruby_version]).to eq(RUBY_VERSION)
+        expect(result[:ruby]).to eq(RUBY_VERSION)
       end
     end
 
@@ -45,14 +45,14 @@ RSpec.describe Sni::SysInfo do
 
         it 'returns the Rails version' do
           result = service.call
-          expect(result[:rails_version]).to eq('7.0.0')
+          expect(result[:rails]).to eq('7.0.0')
         end
       end
 
       context 'when Rails is not defined' do
         it 'returns N/A' do
           result = service.call
-          expect(result[:rails_version]).to eq('N/A')
+          expect(result[:rails]).to eq('N/A')
         end
       end
     end
@@ -61,14 +61,14 @@ RSpec.describe Sni::SysInfo do
       it 'returns gem version from system command' do
         allow(service).to receive(:`).with('gem -v').and_return("3.4.19\n")
         result = service.call
-        expect(result[:gem_version]).to eq('3.4.19')
+        expect(result[:gem]).to eq('3.4.19')
       end
 
       it 'handles command failure gracefully' do
         allow(service).to receive(:`).with('gem -v').and_raise(StandardError.new('Command failed'))
         
         result = service.call
-        expect(result[:gem_version]).to eq('unknown')
+        expect(result[:gem]).to eq('unknown')
       end
     end
 
@@ -116,7 +116,7 @@ RSpec.describe Sni::SysInfo do
           allow(service).to receive(:`).with('env -i /usr/bin/passenger-config --version')
                                        .and_return('Phusion Passenger 6.0.15')
           result = service.call
-          expect(result[:server_version]).to eq('Passenger 6.0.15')
+          expect(result[:server]).to eq('Passenger 6.0.15')
         end
 
         it 'handles passenger command failure' do
@@ -124,7 +124,7 @@ RSpec.describe Sni::SysInfo do
                                        .and_raise(StandardError.new('Command failed'))
           
           result = service.call
-          expect(result[:server_version]).to eq('unknown')
+          expect(result[:server]).to eq('unknown')
         end
       end
 
@@ -146,12 +146,12 @@ RSpec.describe Sni::SysInfo do
           stub_const('Puma', puma_module)
           
           result = service.call
-          expect(result[:server_version]).to eq('Puma 5.6.4')
+          expect(result[:server]).to eq('Puma 5.6.4')
         end
 
         it 'returns N/A when Puma is not defined' do
           result = service.call
-          expect(result[:server_version]).to eq('N/A')
+          expect(result[:server]).to eq('N/A')
         end
       end
 
@@ -164,7 +164,7 @@ RSpec.describe Sni::SysInfo do
 
         it 'returns N/A' do
           result = service.call
-          expect(result[:server_version]).to eq('N/A')
+          expect(result[:server]).to eq('N/A')
         end
       end
     end
@@ -180,14 +180,14 @@ RSpec.describe Sni::SysInfo do
 
         it 'returns the Rails environment' do
           result = service.call
-          expect(result[:environment]).to eq('test')
+          expect(result[:env]).to eq('test')
         end
       end
 
       context 'when Rails is not defined' do
         it 'returns N/A' do
           result = service.call
-          expect(result[:environment]).to eq('N/A')
+          expect(result[:env]).to eq('N/A')
         end
       end
     end

@@ -31,11 +31,11 @@ system_info = Sni::SysInfo.call
 # Returns a hash with:
 # {
 #   host: "hostname",
-#   ruby_version: "3.4.5", 
-#   rails_version: "7.0.0" (or "N/A" if not in Rails),
-#   gem_version: "3.7.0",
-#   server_version: "Passenger 6.0.15" (in production) or "Puma 5.6.4" (in development),
-#   environment: "production" (or "N/A" if not in Rails)
+#   ruby: "3.4.5", 
+#   rails: "7.0.0" (or "N/A" if not in Rails),
+#   gem: "3.7.0",
+#   server: "Passenger 6.0.15" (in production) or "Puma 5.6.4" (in development),
+#   env: "production" (or "N/A" if not in Rails)
 # }
 
 # Use in Rails controllers
