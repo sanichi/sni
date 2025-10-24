@@ -124,7 +124,7 @@ RSpec.describe Sni::SysInfo do
                                        .and_raise(StandardError.new('Command failed'))
           
           result = service.call
-          expect(result[:server_version]).to be_nil
+          expect(result[:server_version]).to eq('unknown')
         end
       end
 

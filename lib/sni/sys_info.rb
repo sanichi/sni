@@ -55,7 +55,7 @@ module Sni
       `env -i /usr/bin/passenger-config --version`.scan(/\d+\.\d+\.\d+/).first
     rescue => e
       log_warning("Failed to get Passenger version: #{e.message}")
-      nil
+      "unknown"
     end
 
     def puma_version
@@ -64,7 +64,7 @@ module Sni
       Puma::Const::VERSION
     rescue => e
       log_warning("Failed to get Puma version: #{e.message}")
-      "N/A"
+      "unknown"
     end
 
     def rails_environment
