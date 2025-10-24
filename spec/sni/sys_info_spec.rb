@@ -116,7 +116,7 @@ RSpec.describe Sni::SysInfo do
           allow(service).to receive(:`).with('env -i /usr/bin/passenger-config --version')
                                        .and_return('Phusion Passenger 6.0.15')
           result = service.call
-          expect(result[:server_version]).to eq('6.0.15')
+          expect(result[:server_version]).to eq('Phusion 6.0.15')
         end
 
         it 'handles passenger command failure' do
@@ -146,7 +146,7 @@ RSpec.describe Sni::SysInfo do
           stub_const('Puma', puma_module)
           
           result = service.call
-          expect(result[:server_version]).to eq('5.6.4')
+          expect(result[:server_version]).to eq('Puma 5.6.4')
         end
 
         it 'returns N/A when Puma is not defined' do

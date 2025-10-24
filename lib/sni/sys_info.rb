@@ -52,7 +52,8 @@ module Sni
 
     def passenger_version
       return nil unless production_environment?
-      `env -i /usr/bin/passenger-config --version`.scan(/\d+\.\d+\.\d+/).first
+      version = `env -i /usr/bin/passenger-config --version`.scan(/\d+\.\d+\.\d+/).first
+      version ? "Phusion #{version}" : nil
     rescue => e
       log_warning("Failed to get Passenger version: #{e.message}")
       "unknown"
@@ -61,7 +62,7 @@ module Sni
     def puma_version
       return nil unless development_environment?
       return "N/A" unless defined?(Puma)
-      Puma::Const::VERSION
+      "Puma #{Puma::Const::VERSION}"
     rescue => e
       log_warning("Failed to get Puma version: #{e.message}")
       "unknown"
