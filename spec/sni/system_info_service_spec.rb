@@ -1,0 +1,195 @@
+require 'spec_helper'
+
+RSpec.describe Sni::SystemInfoService do
+  let(:service) { described_class.new }
+
+  before do
+    # Mock all system calls by default
+    allow(service).to receive(:`).with('hostname').and_return("test-host\n")
+    allow(service).to receive(:`).with('gem -v').and_return("3.4.19\n")
+    allow(service).to receive(:`).with('env -i /usr/bin/passenger-config --version').and_return("Phusion Passenger 6.0.15\n")
+    allow(ENV).to receive(:[]).with('HOSTNAME').and_return(nil)
+  end
+
+  describe '.call' do
+    it 'returns a hash with system information' do
+      result = described_class.call
+
+      expect(result).to be_a(Hash)
+      expect(result).to have_key(:host)
+      expect(result).to have_key(:ruby_version)
+      expect(result).to have_key(:rails_version)
+      expect(result).to have_key(:gem_version)
+      expect(result).to have_key(:server_version)
+      expect(result).to have_key(:environment)
+    end
+  end
+
+  describe '#call' do
+
+    describe 'ruby_version' do
+      it 'returns the Ruby version' do
+        result = service.call
+        expect(result[:ruby_version]).to eq(RUBY_VERSION)
+      end
+    end
+
+    describe 'rails_version' do
+      context 'when Rails is defined' do
+        before do
+          rails_mock = double('Rails')
+          allow(rails_mock).to receive(:version).and_return('7.0.0')
+          allow(rails_mock).to receive(:env).and_return(double(production?: false, development?: false))
+          stub_const('Rails', rails_mock)
+        end
+
+        it 'returns the Rails version' do
+          result = service.call
+          expect(result[:rails_version]).to eq('7.0.0')
+        end
+      end
+
+      context 'when Rails is not defined' do
+        it 'returns N/A' do
+          result = service.call
+          expect(result[:rails_version]).to eq('N/A')
+        end
+      end
+    end
+
+    describe 'gem_version' do
+      it 'returns gem version from system command' do
+        allow(service).to receive(:`).with('gem -v').and_return("3.4.19\n")
+        result = service.call
+        expect(result[:gem_version]).to eq('3.4.19')
+      end
+
+      it 'handles command failure gracefully' do
+        allow(service).to receive(:`).with('gem -v').and_raise(StandardError.new('Command failed'))
+        
+        result = service.call
+        expect(result[:gem_version]).to eq('unknown')
+      end
+    end
+
+    describe 'hostname' do
+      context 'when HOSTNAME env var is set' do
+        before do
+          allow(ENV).to receive(:[]).with('HOSTNAME').and_return('test-host')
+        end
+
+        it 'returns the HOSTNAME env var' do
+          result = service.call
+          expect(result[:host]).to eq('test-host')
+        end
+      end
+
+      context 'when HOSTNAME env var is not set' do
+        before do
+          allow(ENV).to receive(:[]).with('HOSTNAME').and_return(nil)
+        end
+
+        it 'returns hostname from system command' do
+          allow(service).to receive(:`).with('hostname').and_return("my-host.local\n")
+          result = service.call
+          expect(result[:host]).to eq('my-host')
+        end
+
+        it 'handles command failure gracefully' do
+          allow(service).to receive(:`).with('hostname').and_raise(StandardError.new('Command failed'))
+          
+          result = service.call
+          expect(result[:host]).to eq('unknown')
+        end
+      end
+    end
+
+    describe 'server_version' do
+      context 'in production environment' do
+        before do
+          rails_env = double(production?: true, development?: false)
+          rails_mock = double('Rails', env: rails_env, version: '7.0.0')
+          stub_const('Rails', rails_mock)
+        end
+
+        it 'returns passenger version' do
+          allow(service).to receive(:`).with('env -i /usr/bin/passenger-config --version')
+                                       .and_return('Phusion Passenger 6.0.15')
+          result = service.call
+          expect(result[:server_version]).to eq('6.0.15')
+        end
+
+        it 'handles passenger command failure' do
+          allow(service).to receive(:`).with('env -i /usr/bin/passenger-config --version')
+                                       .and_raise(StandardError.new('Command failed'))
+          
+          result = service.call
+          expect(result[:server_version]).to be_nil
+        end
+      end
+
+      context 'in development environment' do
+        before do
+          rails_env = double(production?: false, development?: true)
+          rails_mock = double('Rails', env: rails_env, version: '7.0.0')
+          stub_const('Rails', rails_mock)
+        end
+
+        it 'returns puma version when Puma is defined' do
+          # Create a proper nested constant structure
+          const_module = Module.new
+          const_module.const_set(:VERSION, '5.6.4')
+          
+          puma_module = Module.new  
+          puma_module.const_set(:Const, const_module)
+          
+          stub_const('Puma', puma_module)
+          
+          result = service.call
+          expect(result[:server_version]).to eq('5.6.4')
+        end
+
+        it 'returns N/A when Puma is not defined' do
+          result = service.call
+          expect(result[:server_version]).to eq('N/A')
+        end
+      end
+
+      context 'in other environments' do
+        before do
+          rails_env = double(production?: false, development?: false)
+          rails_mock = double('Rails', env: rails_env, version: '7.0.0')
+          stub_const('Rails', rails_mock)
+        end
+
+        it 'returns N/A' do
+          result = service.call
+          expect(result[:server_version]).to eq('N/A')
+        end
+      end
+    end
+
+    describe 'environment' do
+      context 'when Rails is defined' do
+        before do
+          rails_env = double(production?: false, development?: false)
+          rails_mock = double('Rails', env: rails_env, version: '7.0.0')
+          allow(rails_env).to receive(:to_s).and_return('test')
+          stub_const('Rails', rails_mock)
+        end
+
+        it 'returns the Rails environment' do
+          result = service.call
+          expect(result[:environment]).to eq('test')
+        end
+      end
+
+      context 'when Rails is not defined' do
+        it 'returns N/A' do
+          result = service.call
+          expect(result[:environment]).to eq('N/A')
+        end
+      end
+    end
+  end
+end
