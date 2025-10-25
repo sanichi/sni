@@ -24,6 +24,7 @@ RSpec.describe Sni::SysInfo do
       expect(result).to have_key(:bundler)
       expect(result).to have_key(:server)
       expect(result).to have_key(:env)
+      expect(result).to have_key(:postgres)
     end
   end
 
@@ -213,6 +214,56 @@ RSpec.describe Sni::SysInfo do
         it 'returns N/A' do
           result = service.call
           expect(result[:env]).to eq('N/A')
+        end
+      end
+    end
+
+    describe 'postgres_version' do
+      context 'when ActiveRecord is defined' do
+        let(:connection) { double('connection') }
+        let(:result) { double('result', values: [['PostgreSQL 14.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 4.4.7 20120313 (Red Hat 4.4.7-18), 64-bit']]) }
+
+        before do
+          active_record_base = double('ActiveRecord::Base')
+          allow(active_record_base).to receive(:connection).and_return(connection)
+          stub_const('ActiveRecord::Base', active_record_base)
+        end
+
+        it 'returns postgres version when connection succeeds' do
+          allow(connection).to receive(:execute).with('select version();').and_return(result)
+
+          result = service.call
+          expect(result[:postgres]).to eq('14.5')
+        end
+
+        it 'handles connection failure gracefully' do
+          allow(connection).to receive(:execute).with('select version();').and_raise(StandardError.new('Connection failed'))
+
+          result = service.call
+          expect(result[:postgres]).to eq('unknown')
+        end
+
+        it 'handles unexpected version format' do
+          unexpected_result = double('result', values: [['MySQL 8.0.30']])
+          allow(connection).to receive(:execute).with('select version();').and_return(unexpected_result)
+
+          result = service.call
+          expect(result[:postgres]).to eq('unexpected format')
+        end
+
+        it 'handles different postgres versions' do
+          postgres_15_result = double('result', values: [['PostgreSQL 15.2 on x86_64-pc-linux-gnu']])
+          allow(connection).to receive(:execute).with('select version();').and_return(postgres_15_result)
+
+          result = service.call
+          expect(result[:postgres]).to eq('15.2')
+        end
+      end
+
+      context 'when ActiveRecord is not defined' do
+        it 'returns N/A' do
+          result = service.call
+          expect(result[:postgres]).to eq('N/A')
         end
       end
     end

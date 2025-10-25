@@ -37,6 +37,7 @@ system_info = Sni::SysInfo.call
 #   gem: "3.7.0",
 #   bundler: "2.7.0",
 #   server: "Passenger 6.0.15" (in production) or "Puma 5.6.4" (in development),
+#   postgres: "14.5" (or "N/A" if not using ActiveRecord/PostgreSQL),
 # }
 
 # Use in Rails controllers

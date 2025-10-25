@@ -12,7 +12,8 @@ module Sni
         rails: rails_version,
         gem: gem_version,
         bundler: bundler_version,
-        server: server_version
+        server: server_version,
+        postgres: postgres_version
       }
     end
 
@@ -80,13 +81,17 @@ module Sni
       Rails.env.to_s
     end
 
-    def production_environment?
-      defined?(Rails) && Rails.env.production?
+    def postgres_version
+      return "N/A" unless defined?(ActiveRecord)
+      version = ActiveRecord::Base.connection.execute('select version();').values[0][0]
+      version.match(/PostgreSQL (\d+\.\d+)/) ? $1 : "unexpected format"
+    rescue => e
+      log_warning("Failed to get PostgreSQL version: #{e.message}")
+      "unknown"
     end
 
-    def development_environment?
-      defined?(Rails) && Rails.env.development?
-    end
+    def production_environment? = defined?(Rails) && Rails.env.production?
+    def development_environment? = defined?(Rails) && Rails.env.development?
 
     def log_warning(message)
       if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger
