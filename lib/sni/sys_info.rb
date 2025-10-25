@@ -41,6 +41,7 @@ module Sni
       "unknown"
     end
 
+    # note: ENV["BUNDLER_VERSION"] could be used here instead
     def bundler_version
       `bundler -v`.scan(/\d+\.\d+\.\d+/).first || "unexpected format"
     rescue => e
