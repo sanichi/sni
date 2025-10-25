@@ -28,7 +28,6 @@ RSpec.describe Sni::SysInfo do
   end
 
   describe '#call' do
-
     describe 'ruby_version' do
       it 'returns the Ruby version' do
         result = service.call
@@ -67,6 +66,13 @@ RSpec.describe Sni::SysInfo do
         result = service.call
         expect(result[:gem]).to eq('unknown')
       end
+
+      it 'handles unexpected format' do
+        allow(service).to receive(:`).with('gem -v').and_return("3-7-0\n")
+
+        result = service.call
+        expect(result[:gem]).to eq('unexpected format')
+      end
     end
 
     describe 'bundler_version' do
@@ -79,9 +85,16 @@ RSpec.describe Sni::SysInfo do
 
       it 'handles command failure gracefully' do
         allow(service).to receive(:`).with('bundler -v').and_raise(StandardError.new('Command failed'))
-        
+
         result = service.call
         expect(result[:bundler]).to eq('unknown')
+      end
+
+      it 'handles unexpected format' do
+        allow(service).to receive(:`).with('bundler -v').and_return("2.7\n")
+
+        result = service.call
+        expect(result[:bundler]).to eq('unexpected format')
       end
     end
 
@@ -125,8 +138,8 @@ RSpec.describe Sni::SysInfo do
         end
 
         it 'returns passenger version' do
-          allow(service).to receive(:`).with('env -i /usr/bin/passenger-config --version')
-                                       .and_return('Phusion Passenger 6.0.15')
+          allow(service).to receive(:`).with('env -i /usr/bin/passenger-config --version').and_return('Phusion Passenger 6.0.15')
+
           result = service.call
           expect(result[:server]).to eq('Passenger 6.0.15')
         end
@@ -136,6 +149,13 @@ RSpec.describe Sni::SysInfo do
           
           result = service.call
           expect(result[:server]).to eq('unknown')
+        end
+
+        it 'handles unexpected format' do
+          allow(service).to receive(:`).with('env -i /usr/bin/passenger-config --version').and_return("6.0.a\n")
+
+          result = service.call
+          expect(result[:server]).to eq('unexpected format')
         end
       end
 

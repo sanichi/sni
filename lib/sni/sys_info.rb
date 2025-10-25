@@ -35,14 +35,14 @@ module Sni
     end
 
     def gem_version
-      `gem -v`.strip
+      `gem -v`.scan(/\d+\.\d+\.\d+/).first || "unexpected format"
     rescue => e
       log_warning("Failed to get gem version: #{e.message}")
       "unknown"
     end
 
     def bundler_version
-      `bundler -v`.scan(/\d+\.\d+\.\d+/).first
+      `bundler -v`.scan(/\d+\.\d+\.\d+/).first || "unexpected format"
     rescue => e
       log_warning("Failed to get bundler version: #{e.message}")
       "unknown"
@@ -59,16 +59,14 @@ module Sni
     end
 
     def passenger_version
-      return nil unless production_environment?
       version = `env -i /usr/bin/passenger-config --version`.scan(/\d+\.\d+\.\d+/).first
-      version ? "Passenger #{version}" : nil
+      version ? "Passenger #{version}" : "unexpected format"
     rescue => e
       log_warning("Failed to get Passenger version: #{e.message}")
       "unknown"
     end
 
     def puma_version
-      return nil unless development_environment?
       return "N/A" unless defined?(Puma)
       "Puma #{Puma::Const::VERSION}"
     rescue => e
