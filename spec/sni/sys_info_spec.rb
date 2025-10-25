@@ -10,6 +10,9 @@ RSpec.describe Sni::SysInfo do
     allow(service).to receive(:`).with('bundler -v').and_return("Bundler version 2.7.0\n")
     allow(service).to receive(:`).with('env -i /usr/bin/passenger-config --version').and_return("Phusion Passenger 6.0.15\n")
     allow(ENV).to receive(:[]).with('HOSTNAME').and_return(nil)
+    allow(ENV).to receive(:[]).with('USER').and_return('sanichi')
+    allow(ENV).to receive(:[]).with('SHELL').and_return('/bin/bash')
+    allow(ENV).to receive(:[]).with('PWD').and_return('/var/www/mio/current')
   end
 
   describe '.call' do
@@ -25,10 +28,65 @@ RSpec.describe Sni::SysInfo do
       expect(result).to have_key(:server)
       expect(result).to have_key(:env)
       expect(result).to have_key(:postgres)
+      expect(result).to have_key(:user)
+      expect(result).to have_key(:shell)
+      expect(result).to have_key(:pwd)
     end
   end
 
   describe '#call' do
+    describe 'hostname' do
+      context 'when HOSTNAME env var is set' do
+        it 'returns the HOSTNAME env var' do
+          allow(ENV).to receive(:[]).with('HOSTNAME').and_return('test-host')
+
+          result = service.call
+          expect(result[:host]).to eq('test-host')
+        end
+      end
+
+      context 'when HOSTNAME env var is not set' do
+        before do
+          allow(ENV).to receive(:[]).with('HOSTNAME').and_return(nil)
+        end
+
+        it 'returns hostname from system command' do
+          allow(service).to receive(:`).with('hostname').and_return("my-host.local\n")
+
+          result = service.call
+          expect(result[:host]).to eq('my-host')
+        end
+
+        it 'handles command failure gracefully' do
+          allow(service).to receive(:`).with('hostname').and_raise(StandardError.new('Command failed'))
+          
+          result = service.call
+          expect(result[:host]).to eq('unknown')
+        end
+      end
+    end
+
+    describe 'environment' do
+      context 'when Rails is defined' do
+        it 'returns the Rails environment' do
+          rails_env = double(production?: false, development?: false)
+          rails_mock = double('Rails', env: rails_env, version: '7.0.0')
+          allow(rails_env).to receive(:to_s).and_return('test')
+          stub_const('Rails', rails_mock)
+
+          result = service.call
+          expect(result[:env]).to eq('test')
+        end
+      end
+
+      context 'when Rails is not defined' do
+        it 'returns N/A' do
+          result = service.call
+          expect(result[:env]).to eq('N/A')
+        end
+      end
+    end
+
     describe 'ruby_version' do
       it 'returns the Ruby version' do
         result = service.call
@@ -99,37 +157,6 @@ RSpec.describe Sni::SysInfo do
       end
     end
 
-    describe 'hostname' do
-      context 'when HOSTNAME env var is set' do
-        it 'returns the HOSTNAME env var' do
-          allow(ENV).to receive(:[]).with('HOSTNAME').and_return('test-host')
-
-          result = service.call
-          expect(result[:host]).to eq('test-host')
-        end
-      end
-
-      context 'when HOSTNAME env var is not set' do
-        before do
-          allow(ENV).to receive(:[]).with('HOSTNAME').and_return(nil)
-        end
-
-        it 'returns hostname from system command' do
-          allow(service).to receive(:`).with('hostname').and_return("my-host.local\n")
-
-          result = service.call
-          expect(result[:host]).to eq('my-host')
-        end
-
-        it 'handles command failure gracefully' do
-          allow(service).to receive(:`).with('hostname').and_raise(StandardError.new('Command failed'))
-          
-          result = service.call
-          expect(result[:host]).to eq('unknown')
-        end
-      end
-    end
-
     describe 'server_version' do
       context 'in production environment' do
         before do
@@ -197,27 +224,6 @@ RSpec.describe Sni::SysInfo do
       end
     end
 
-    describe 'environment' do
-      context 'when Rails is defined' do
-        it 'returns the Rails environment' do
-          rails_env = double(production?: false, development?: false)
-          rails_mock = double('Rails', env: rails_env, version: '7.0.0')
-          allow(rails_env).to receive(:to_s).and_return('test')
-          stub_const('Rails', rails_mock)
-
-          result = service.call
-          expect(result[:env]).to eq('test')
-        end
-      end
-
-      context 'when Rails is not defined' do
-        it 'returns N/A' do
-          result = service.call
-          expect(result[:env]).to eq('N/A')
-        end
-      end
-    end
-
     describe 'postgres_version' do
       context 'when ActiveRecord is defined' do
         let(:connection) { double('connection') }
@@ -265,6 +271,54 @@ RSpec.describe Sni::SysInfo do
           result = service.call
           expect(result[:postgres]).to eq('N/A')
         end
+      end
+    end
+
+    describe 'user' do
+      it 'returns the USER environment variable when set' do
+        allow(ENV).to receive(:[]).with('USER').and_return('sanichi')
+
+        result = service.call
+        expect(result[:user]).to eq('sanichi')
+      end
+
+      it 'returns unknown when USER environment variable is not set' do
+        allow(ENV).to receive(:[]).with('USER').and_return(nil)
+
+        result = service.call
+        expect(result[:user]).to eq('unknown')
+      end
+    end
+
+    describe 'shell' do
+      it 'returns the SHELL environment variable when set' do
+        allow(ENV).to receive(:[]).with('SHELL').and_return('/bin/bash')
+
+        result = service.call
+        expect(result[:shell]).to eq('/bin/bash')
+      end
+
+      it 'returns unknown when SHELL environment variable is not set' do
+        allow(ENV).to receive(:[]).with('SHELL').and_return(nil)
+
+        result = service.call
+        expect(result[:shell]).to eq('unknown')
+      end
+    end
+
+    describe 'pwd' do
+      it 'returns the PWD environment variable when set' do
+        allow(ENV).to receive(:[]).with('PWD').and_return('/var/www/mio/current')
+
+        result = service.call
+        expect(result[:pwd]).to eq('/var/www/mio/current')
+      end
+
+      it 'returns unknown when PWD environment variable is not set' do
+        allow(ENV).to receive(:[]).with('PWD').and_return(nil)
+
+        result = service.call
+        expect(result[:pwd]).to eq('unknown')
       end
     end
   end

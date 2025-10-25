@@ -38,6 +38,9 @@ system_info = Sni::SysInfo.call
 #   bundler: "2.7.0",
 #   server: "Passenger 6.0.15" (in production) or "Puma 5.6.4" (in development),
 #   postgres: "14.5" (or "N/A" if not using ActiveRecord/PostgreSQL),
+#   user: "sanichi",
+#   shell: "/bin/bash",
+#   pwd: "/var/www/mio/current"
 # }
 
 # Use in Rails controllers

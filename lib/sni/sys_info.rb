@@ -13,7 +13,10 @@ module Sni
         gem: gem_version,
         bundler: bundler_version,
         server: server_version,
-        postgres: postgres_version
+        postgres: postgres_version,
+        user: user,
+        shell: shell,
+        pwd: pwd
       }
     end
 
@@ -24,6 +27,11 @@ module Sni
     rescue => e
       log_warning("Failed to get hostname: #{e.message}")
       "unknown"
+    end
+
+    def rails_environment
+      return "N/A" unless defined?(Rails)
+      Rails.env.to_s
     end
 
     def ruby_version
@@ -76,11 +84,6 @@ module Sni
       "unknown"
     end
 
-    def rails_environment
-      return "N/A" unless defined?(Rails)
-      Rails.env.to_s
-    end
-
     def postgres_version
       return "N/A" unless defined?(ActiveRecord)
       version = ActiveRecord::Base.connection.execute('select version();').values[0][0]
@@ -88,6 +91,18 @@ module Sni
     rescue => e
       log_warning("Failed to get PostgreSQL version: #{e.message}")
       "unknown"
+    end
+
+    def user
+      ENV["USER"] || "unknown"
+    end
+
+    def shell
+      ENV["SHELL"] || "unknown"
+    end
+
+    def pwd
+      ENV["PWD"] || "unknown"
     end
 
     def production_environment? = defined?(Rails) && Rails.env.production?
