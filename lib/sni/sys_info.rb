@@ -108,93 +108,19 @@ module Sni
 
     def path
       return "unknown" unless ENV["PATH"]
-      paths = ENV["PATH"].split(":")
-      compress_paths(paths)
+      ENV["PATH"].split(":").map { |p| simplify_home_path(p) }.join(", ")
     rescue => e
       log_warning("Failed to get path: #{e.message}")
       "unknown"
     end
 
-    def compress_paths(paths)
-      return "" if paths.empty?
-      return paths.first if paths.length == 1
-
-      # Group paths by common prefixes
-      grouped = group_by_prefix(paths)
-
-      # Convert to brace expansion format
-      grouped.map do |prefix, suffixes|
-        if suffixes.length == 1 && suffixes.first.empty?
-          prefix
-        elsif suffixes.length == 1
-          "#{prefix}/#{suffixes.first}"
-        else
-          clean_suffixes = suffixes.map { |s| s.empty? ? "" : s }
-          if clean_suffixes.include?("")
-            others = clean_suffixes.reject(&:empty?)
-            if others.empty?
-              prefix
-            else
-              "#{prefix}{,/#{others.join(",/")}}"
-            end
-          else
-            "#{prefix}/{#{clean_suffixes.join(",")}}"
-          end
-        end
-      end.join(", ")
-    end
-
-    def group_by_prefix(paths)
-      return { "" => paths } if paths.empty?
-
-      # Find common prefix
-      first_parts = paths.first.split("/")
-      common_prefix_length = 0
-
-      first_parts.each_with_index do |part, index|
-        if paths.all? { |path| path.split("/")[index] == part }
-          common_prefix_length = index + 1
-        else
-          break
-        end
-      end
-
-      if common_prefix_length == 0
-        # No common prefix, group by first component
-        groups = {}
-        paths.each do |path|
-          parts = path.split("/")
-          first = parts.first || ""
-          rest = parts[1..-1]&.join("/") || ""
-          groups[first] ||= []
-          groups[first] << rest
-        end
-        return groups
+    def simplify_home_path(path)
+      if path =~ %r{^/Users/\w+(/.*)?$}
+        path.sub(%r{^/Users/\w+}, "~")
+      elsif path =~ %r{^/home/\w+(/.*)?$}
+        path.sub(%r{^/home/\w+}, "~")
       else
-        # Has common prefix
-        common = first_parts[0...common_prefix_length].join("/")
-        suffixes = paths.map do |path|
-          parts = path.split("/")
-          parts[common_prefix_length..-1]&.join("/") || ""
-        end
-
-        if suffixes.all?(&:empty?)
-          return { common => [""] }
-        else
-          # Recursively group the suffixes
-          suffix_groups = group_by_prefix(suffixes.reject(&:empty?))
-          if suffixes.include?("")
-            # Add empty suffix for the common prefix itself
-            suffix_groups[""] = [""]
-          end
-
-          result = {}
-          suffix_groups.each do |suffix_prefix, suffix_list|
-            full_prefix = suffix_prefix.empty? ? common : "#{common}/#{suffix_prefix}"
-            result[full_prefix] = suffix_list
-          end
-          return result
-        end
+        path
       end
     end
 

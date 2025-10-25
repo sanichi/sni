@@ -325,23 +325,30 @@ RSpec.describe Sni::SysInfo do
     end
 
     describe 'path' do
-      it 'returns the PATH environment variable compressed with brace expansion' do
+      it 'returns the PATH environment variable as comma-separated list' do
         allow(ENV).to receive(:[]).with('PATH').and_return('/usr/bin:/usr/sbin:/bin')
 
         result = service.call
-        expect(result[:path]).to eq('/usr/{bin,sbin}, /bin')
+        expect(result[:path]).to eq('/usr/bin, /usr/sbin, /bin')
       end
 
-      it 'handles complex nested paths with brace expansion' do
+      it 'simplifies /Users/username paths to ~ notation' do
         path_value = '/Users/mjo/.rbenv/versions/3.4.5/bin:/Users/mjo/.rbenv/shims:/opt/homebrew/bin'
         allow(ENV).to receive(:[]).with('PATH').and_return(path_value)
 
         result = service.call
-        expect(result[:path]).to include('rbenv')
-        expect(result[:path]).to include('homebrew')
+        expect(result[:path]).to eq('~/.rbenv/versions/3.4.5/bin, ~/.rbenv/shims, /opt/homebrew/bin')
       end
 
-      it 'returns single path without braces' do
+      it 'simplifies /home/username paths to ~ notation' do
+        path_value = '/home/user/.local/bin:/usr/bin'
+        allow(ENV).to receive(:[]).with('PATH').and_return(path_value)
+
+        result = service.call
+        expect(result[:path]).to eq('~/.local/bin, /usr/bin')
+      end
+
+      it 'returns single path as-is' do
         allow(ENV).to receive(:[]).with('PATH').and_return('/usr/bin')
 
         result = service.call
@@ -362,9 +369,9 @@ RSpec.describe Sni::SysInfo do
         expect(result[:path]).to eq('unknown')
       end
 
-      it 'handles path compression failure gracefully' do
+      it 'handles path processing failure gracefully' do
         allow(ENV).to receive(:[]).with('PATH').and_return('/usr/bin')
-        allow(service).to receive(:compress_paths).and_raise(StandardError.new('Compression failed'))
+        allow(service).to receive(:simplify_home_path).and_raise(StandardError.new('Processing failed'))
 
         result = service.call
         expect(result[:path]).to eq('unknown')
