@@ -11,6 +11,7 @@ module Sni
         ruby: ruby_version,
         rails: rails_version,
         gem: gem_version,
+        bundler: bundler_version,
         server: server_version
       }
     end
@@ -37,6 +38,13 @@ module Sni
       `gem -v`.strip
     rescue => e
       log_warning("Failed to get gem version: #{e.message}")
+      "unknown"
+    end
+
+    def bundler_version
+      `bundler -v`.scan(/\d+\.\d+\.\d+/).first
+    rescue => e
+      log_warning("Failed to get bundler version: #{e.message}")
       "unknown"
     end
 

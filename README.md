@@ -35,6 +35,7 @@ system_info = Sni::SysInfo.call
 #   ruby: "3.4.5", 
 #   rails: "7.0.0" (or "N/A" if not in Rails),
 #   gem: "3.7.0",
+#   bundler: "2.7.0",
 #   server: "Passenger 6.0.15" (in production) or "Puma 5.6.4" (in development),
 # }
 
