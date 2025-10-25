@@ -13,6 +13,7 @@ RSpec.describe Sni::SysInfo do
     allow(ENV).to receive(:[]).with('USER').and_return('sanichi')
     allow(ENV).to receive(:[]).with('SHELL').and_return('/bin/bash')
     allow(ENV).to receive(:[]).with('PWD').and_return('/var/www/mio/current')
+    allow(ENV).to receive(:[]).with('PATH').and_return('/usr/bin:/usr/sbin')
   end
 
   describe '.call' do
@@ -31,6 +32,7 @@ RSpec.describe Sni::SysInfo do
       expect(result).to have_key(:user)
       expect(result).to have_key(:shell)
       expect(result).to have_key(:pwd)
+      expect(result).to have_key(:path)
     end
   end
 
@@ -319,6 +321,53 @@ RSpec.describe Sni::SysInfo do
 
         result = service.call
         expect(result[:pwd]).to eq('unknown')
+      end
+    end
+
+    describe 'path' do
+      it 'returns the PATH environment variable compressed with brace expansion' do
+        allow(ENV).to receive(:[]).with('PATH').and_return('/usr/bin:/usr/sbin:/bin')
+
+        result = service.call
+        expect(result[:path]).to eq('/usr/{bin,sbin}, /bin')
+      end
+
+      it 'handles complex nested paths with brace expansion' do
+        path_value = '/Users/mjo/.rbenv/versions/3.4.5/bin:/Users/mjo/.rbenv/shims:/opt/homebrew/bin'
+        allow(ENV).to receive(:[]).with('PATH').and_return(path_value)
+
+        result = service.call
+        expect(result[:path]).to include('rbenv')
+        expect(result[:path]).to include('homebrew')
+      end
+
+      it 'returns single path without braces' do
+        allow(ENV).to receive(:[]).with('PATH').and_return('/usr/bin')
+
+        result = service.call
+        expect(result[:path]).to eq('/usr/bin')
+      end
+
+      it 'returns empty string for empty PATH' do
+        allow(ENV).to receive(:[]).with('PATH').and_return('')
+
+        result = service.call
+        expect(result[:path]).to eq('')
+      end
+
+      it 'returns unknown when PATH environment variable is not set' do
+        allow(ENV).to receive(:[]).with('PATH').and_return(nil)
+
+        result = service.call
+        expect(result[:path]).to eq('unknown')
+      end
+
+      it 'handles path compression failure gracefully' do
+        allow(ENV).to receive(:[]).with('PATH').and_return('/usr/bin')
+        allow(service).to receive(:compress_paths).and_raise(StandardError.new('Compression failed'))
+
+        result = service.call
+        expect(result[:path]).to eq('unknown')
       end
     end
   end
