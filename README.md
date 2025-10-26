@@ -24,6 +24,8 @@ bundle install
 
 ## Usage
 
+### System Information
+
 ```ruby
 # Get all system information
 system_info = Sni::SysInfo.call
@@ -32,7 +34,7 @@ system_info = Sni::SysInfo.call
 # {
 #   host: "hostname",
 #   env: "production" (or "N/A" if not in Rails)
-#   ruby: "3.4.5", 
+#   ruby: "3.4.5",
 #   rails: "7.0.0" (or "N/A" if not in Rails),
 #   gem: "3.7.0",
 #   bundler: "2.7.0",
@@ -57,6 +59,38 @@ end
     <td><%= value %></td>
   </tr>
 <% end %>
+```
+
+### Bootstrap Layout Helper
+
+Generate responsive Bootstrap grid CSS classes for form controls and layouts:
+
+```ruby
+# Simple single row layout
+classes = Sni::Layout.call(sm: [2, 3, 3], lg: [1, 2, 3])
+# Returns array of CSS class strings:
+# [
+#   "col-sm-2 offset-sm-2 col-lg-1 offset-lg-3",
+#   "col-sm-3 offset-sm-0 col-lg-2 offset-lg-0",
+#   "col-sm-3 offset-sm-0 col-lg-3 offset-lg-0"
+# ]
+
+# Multiple rows layout
+classes = Sni::Layout.call(md: [[3, 3], [2, 4]], lg: [[2, 2], [1, 5]])
+# Returns array for each form control across all rows
+
+# Use in Rails views with form helpers
+<% layout_classes = Sni::Layout.call(sm: [4, 4, 4], lg: [2, 4, 6]) %>
+<% [:name, :email, :message].each_with_index do |field, i| %>
+  <div class="<%= layout_classes[i] %>">
+    <%= form.text_field field, class: "form-control" %>
+  </div>
+<% end %>
+
+# Supported breakpoints: xs, sm, md, lg, xl, xxl (xx alias for xxl)
+# Column widths: 1-12 (Bootstrap grid system)
+# Automatic centering with offset calculation
+# Validates input and provides helpful error messages
 ```
 
 ## Development
