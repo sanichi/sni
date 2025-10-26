@@ -17,10 +17,6 @@ module Sni
     end
 
     def call
-      to_a
-    end
-
-    def to_a
       (0...@number).map{ |i| @col.map{ |col| col[i] }.join(" ") }
     end
 
