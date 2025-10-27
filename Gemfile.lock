@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sni (0.8.1)
+    sni (0.9.0)
 
 GEM
   remote: https://rubygems.org/

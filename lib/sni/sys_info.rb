@@ -1,10 +1,10 @@
 module Sni
   class SysInfo
-    def self.call
-      new.call
+    def self.call(...)
+      new.call(...)
     end
 
-    def call
+    def call(database: true, sensitive: true)
       {
         host: hostname,
         env: rails_environment,
@@ -13,15 +13,15 @@ module Sni
         gem: gem_version,
         bundler: bundler_version,
         server: server_version,
-        postgres: postgres_version,
-        user: user,
-        shell: shell,
-        pwd: pwd,
-        path: path
+        **database_fields(database),
+        **sensitive_fields(sensitive),
       }
     end
 
     private
+
+    def database_fields(allowed)  = allowed ? { postgres: postgres_version } : {}
+    def sensitive_fields(allowed) = allowed ? { user: user, shell: shell, pwd: pwd, path: path } : {}
 
     def hostname
       ENV["HOSTNAME"] || `hostname`.chomp.sub(".local", "")

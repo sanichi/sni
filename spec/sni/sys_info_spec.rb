@@ -34,6 +34,24 @@ RSpec.describe Sni::SysInfo do
       expect(result).to have_key(:pwd)
       expect(result).to have_key(:path)
     end
+
+    it 'returns a subset of information with certain keyword arguments' do
+      result = described_class.call(database: false, sensitive: false)
+
+      expect(result).to be_a(Hash)
+      expect(result).to have_key(:host)
+      expect(result).to have_key(:ruby)
+      expect(result).to have_key(:rails)
+      expect(result).to have_key(:gem)
+      expect(result).to have_key(:bundler)
+      expect(result).to have_key(:server)
+      expect(result).to have_key(:env)
+      expect(result).to_not have_key(:postgres)
+      expect(result).to_not have_key(:user)
+      expect(result).to_not have_key(:shell)
+      expect(result).to_not have_key(:pwd)
+      expect(result).to_not have_key(:path)
+    end
   end
 
   describe '#call' do
@@ -375,6 +393,78 @@ RSpec.describe Sni::SysInfo do
 
         result = service.call
         expect(result[:path]).to eq('unknown')
+      end
+    end
+
+    describe 'keyword arguments' do
+      describe 'database parameter' do
+        it 'includes postgres key when database is true (default)' do
+          result = service.call(database: true)
+          expect(result).to have_key(:postgres)
+        end
+
+        it 'excludes postgres key when database is false' do
+          result = service.call(database: false)
+          expect(result).not_to have_key(:postgres)
+        end
+
+        it 'still includes other keys when database is false' do
+          result = service.call(database: false)
+          expect(result).to have_key(:host)
+          expect(result).to have_key(:ruby)
+          expect(result).to have_key(:user)
+          expect(result).to have_key(:path)
+        end
+      end
+
+      describe 'sensitive parameter' do
+        it 'includes sensitive keys when sensitive is true (default)' do
+          result = service.call(sensitive: true)
+          expect(result).to have_key(:user)
+          expect(result).to have_key(:shell)
+          expect(result).to have_key(:pwd)
+          expect(result).to have_key(:path)
+        end
+
+        it 'excludes sensitive keys when sensitive is false' do
+          result = service.call(sensitive: false)
+          expect(result).not_to have_key(:user)
+          expect(result).not_to have_key(:shell)
+          expect(result).not_to have_key(:pwd)
+          expect(result).not_to have_key(:path)
+        end
+
+        it 'still includes other keys when sensitive is false' do
+          result = service.call(sensitive: false)
+          expect(result).to have_key(:host)
+          expect(result).to have_key(:ruby)
+          expect(result).to have_key(:rails)
+          expect(result).to have_key(:postgres)
+        end
+      end
+
+      describe 'combined parameters' do
+        it 'excludes both database and sensitive keys when both are false' do
+          result = service.call(database: false, sensitive: false)
+
+          # Should not have database keys
+          expect(result).not_to have_key(:postgres)
+
+          # Should not have sensitive keys
+          expect(result).not_to have_key(:user)
+          expect(result).not_to have_key(:shell)
+          expect(result).not_to have_key(:pwd)
+          expect(result).not_to have_key(:path)
+
+          # Should still have standard keys
+          expect(result).to have_key(:host)
+          expect(result).to have_key(:env)
+          expect(result).to have_key(:ruby)
+          expect(result).to have_key(:rails)
+          expect(result).to have_key(:gem)
+          expect(result).to have_key(:bundler)
+          expect(result).to have_key(:server)
+        end
       end
     end
   end
