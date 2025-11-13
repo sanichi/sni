@@ -93,6 +93,35 @@ classes = Sni::Layout.call(md: [[3, 3], [2, 4]], lg: [[2, 2], [1, 5]])
 # Validates input and provides helpful error messages
 ```
 
+### Bootstrap Centering Helper
+
+Center a single column in the Bootstrap grid with automatic offset calculation:
+
+```ruby
+# Center a column at different breakpoints
+classes = Sni::Center.call(xs: 10, md: 8, xl: 4)
+# Returns: "offset-1 col-10 offset-md-2 col-md-8 offset-xl-4 col-xl-4"
+
+# Single breakpoint centering
+classes = Sni::Center.call(sm: 6)
+# Returns: "offset-sm-3 col-sm-6"
+
+# Use in Rails views for centered content
+<div class="<%= Sni::Center.call(xs: 10, lg: 6) %>">
+  <div class="card">
+    <!-- Centered card content -->
+  </div>
+</div>
+
+# Defaults to full width if no breakpoints provided
+classes = Sni::Center.call({})
+# Returns: "col-12"
+
+# Supported breakpoints: xs, sm, md, lg, xl, xxl (xx alias for xxl)
+# Column widths: 1-12 (Bootstrap grid system)
+# Automatically calculates offset: (12 - width) / 2
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
