@@ -4,7 +4,7 @@ module Sni
   class Center
     BP = %w/xs sm md lg xl xxl/.map(&:to_sym)
 
-    def self.call(args)
+    def self.call(args = {})
       new(args).call
     end
 

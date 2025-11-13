@@ -1,8 +1,8 @@
 # Development Notes for Claude
 
 ## Testing & Version Updates
-- Always run `rake spec` after updating the version number in `lib/sni/version.rb`
-- This ensures Gemfile.lock stays in sync with the new version
+- Always run `bin/rake` (not `rake spec`) after updating the version number in `lib/sni/version.rb`
+- Using `bin/rake` ensures Bundler updates Gemfile.lock when the version changes (since the gem is installed as a PATH dependency)
 - All tests must pass before committing
 
 ## Code Style

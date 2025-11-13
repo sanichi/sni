@@ -3,6 +3,11 @@ require 'spec_helper'
 RSpec.describe Sni::Center do
   describe "valid" do
     it "default with no arguments" do
+      result = Sni::Center.call
+      expect(result).to eq "col-12"
+    end
+
+    it "default with empty hash" do
       result = Sni::Center.call({})
       expect(result).to eq "col-12"
     end
